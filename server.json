@@ -2,7 +2,7 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.Kubis010/linkedin-mcp-server-salesbot",
   "title": "LinkedIn MCP Server (Salesbot)",
-  "description": "AI-assisted, human-in-the-loop tool for managing professional LinkedIn relationships: research and organize contacts, draft highly personalized messages for human review and approval, sync inbox conversations, and enrich profiles. Built-in daily/hourly safety thresholds, mandatory approval flow, and prompt-injection defense keep activity within LinkedIn's safe limits — designed for targeted, meaningful outreach, not bulk messaging.",
+  "description": "AI-assisted, human-in-the-loop tool for managing professional LinkedIn relationships: research and organize contacts, draft highly personalized messages for human review and approval, sync inbox conversations, enrich profiles, and track everything in a built-in sales CRM — configurable pipeline stages, notes, tasks and custom fields. Built-in daily/hourly safety thresholds, mandatory approval flow, and prompt-injection defense keep activity within LinkedIn's safe limits — designed for targeted, meaningful outreach, not bulk messaging.",
   "version": "1.0.0",
   "websiteUrl": "https://app.salesbot.cz",
   "repository": {

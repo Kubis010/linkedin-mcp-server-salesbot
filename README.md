@@ -14,7 +14,7 @@ It runs as a Supabase Edge Function (Deno + [Hono](https://hono.dev) + [mcp-lite
 | **Endpoint** | `https://app.salesbot.cz/api/mcp` |
 | **Transport** | MCP Streamable HTTP (POST + SSE) |
 | **Auth header** | `x-mcp-api-key: sb_mcp_…` (a Supabase JWT in `Authorization` also works) |
-| **Tool count** | 26 |
+| **Tool count** | 42 |
 | **License** | MIT |
 
 ## How do I connect? (Claude Desktop / Cursor)
@@ -108,6 +108,32 @@ Each tool returns text content; errors return `{ "ok": false, "code": "<CODE>", 
 { "name": "get_chat_messages", "input": { "chat_id": "string (required)", "profile_id": "uuid (optional)", "limit": "number 1-50", "cursor": "string" } }
 { "name": "reply_to_chat",     "input": { "chat_id": "string (required)", "message": "string ≤5000 (required)", "profile_id": "uuid (optional)" } }
 { "name": "mark_chat_read",    "input": { "chat_id": "string (required)", "profile_id": "uuid (optional)" } }
+```
+
+### CRM (pipeline, notes, tasks)
+The CRM is a persistent pipeline separate from contacts. A lead enters it when added to a campaign, or when any of these tools first touch it.
+```json
+{ "name": "set_deal_stage",   "input": { "contact_id": "uuid (required)", "stage": "string (required)", "note": "string" } }
+{ "name": "log_crm_note",     "input": { "contact_id": "uuid (required)", "summary": "string (required)", "pain_points": "string[]", "sentiment": "positive|neutral|negative" } }
+{ "name": "create_task",      "input": { "title": "string (required)", "contact_id": "uuid", "due_at": "ISO 8601", "details": "string" } }
+{ "name": "list_tasks",       "input": { "status": "open|done|cancelled|all", "contact_id": "uuid", "limit": "number" } }
+{ "name": "complete_task",    "input": { "task_id": "uuid (required)", "status": "done|open|cancelled" } }
+{ "name": "get_lead_context", "input": { "contact_id": "uuid (required)", "notes_limit": "number" } }
+{ "name": "update_contact",   "input": { "contact_id": "uuid (required)", "email": "string", "phone": "string", "location": "string", "company": "string", "position": "string", "headline": "string" } }
+{ "name": "set_lead_fields",  "input": { "contact_id": "uuid (required)", "fields": "object { field_key: value }" } }
+{ "name": "export_crm",       "input": { "limit": "number (default 5000, max 20000)" } }
+```
+
+### CRM configuration (stages & custom fields)
+Pipeline stages and custom fields are user-configurable.
+```json
+{ "name": "list_crm_stages",  "input": {} }
+{ "name": "add_crm_stage",    "input": { "label": "string (required)", "color": "hex string" } }
+{ "name": "rename_crm_stage", "input": { "key": "string (required)", "label": "string", "color": "hex string" } }
+{ "name": "delete_crm_stage", "input": { "key": "string (required)", "reassign_to": "string" } }
+{ "name": "list_crm_fields",  "input": {} }
+{ "name": "add_crm_field",    "input": { "label": "string (required)", "type": "text|number|date|url" } }
+{ "name": "delete_crm_field", "input": { "key": "string (required)" } }
 ```
 
 ## Example call
