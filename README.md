@@ -14,7 +14,7 @@ It runs as a Supabase Edge Function (Deno + [Hono](https://hono.dev) + [mcp-lite
 | **Endpoint** | `https://app.salesbot.cz/api/mcp` |
 | **Transport** | MCP Streamable HTTP (POST + SSE) |
 | **Auth header** | `x-mcp-api-key: sb_mcp_…` (a Supabase JWT in `Authorization` also works) |
-| **Tool count** | 42 |
+| **Tool count** | 45 |
 | **License** | MIT |
 
 ## How do I connect? (Claude Desktop / Cursor)
@@ -69,12 +69,15 @@ Each tool returns text content; errors return `{ "ok": false, "code": "<CODE>", 
 { "name": "search_linkedin_navigator", "input": { "search_url": "string (required)", "limit": "number 1-100" } }
 { "name": "scrape_website",            "input": { "url": "string (required)", "max_chars": "number (default 8000, max 20000)" } }
 ```
+`search_google_xray` saves the profiles it finds into a "Google X-Ray" contact list (deduplicated) and returns their `contact_id`s — ready to enrich, add to a campaign, or push into the CRM.
 
 ### Contacts
 ```json
 { "name": "get_contact_profile", "input": { "contact_id": "uuid (required)" } }
 { "name": "list_contacts",       "input": { "list_id": "uuid (required)", "limit": "number", "offset": "number" } }
+{ "name": "enrich_contacts",     "input": { "contact_ids": "uuid[] (required, max 8)", "profile_id": "uuid (optional)" } }
 ```
+`enrich_contacts` scrapes each contact's full LinkedIn profile via the connected account (headline, location, current company & position, full work history, education, skills) and saves it onto the contact. Great right after `search_google_xray`.
 
 ### Campaigns
 ```json
@@ -110,19 +113,22 @@ Each tool returns text content; errors return `{ "ok": false, "code": "<CODE>", 
 { "name": "mark_chat_read",    "input": { "chat_id": "string (required)", "profile_id": "uuid (optional)" } }
 ```
 
-### CRM (pipeline, notes, tasks)
-The CRM is a persistent pipeline separate from contacts. A lead enters it when added to a campaign, or when any of these tools first touch it.
+### CRM (pipeline, notes, tasks, message store)
+The CRM is a persistent pipeline separate from contacts. A lead enters it when added to a campaign, or when any of these tools first touch it. It also acts as a durable store for generated outreach copy: save email / LinkedIn drafts and follow-ups with `save_lead_message`, read them back with `list_lead_messages` or `get_lead_context`, then send them through the right channel's own MCP (e.g. Smartlead for email) — this server never sends them itself.
 ```json
-{ "name": "set_deal_stage",   "input": { "contact_id": "uuid (required)", "stage": "string (required)", "note": "string" } }
-{ "name": "log_crm_note",     "input": { "contact_id": "uuid (required)", "summary": "string (required)", "pain_points": "string[]", "sentiment": "positive|neutral|negative" } }
-{ "name": "create_task",      "input": { "title": "string (required)", "contact_id": "uuid", "due_at": "ISO 8601", "details": "string" } }
-{ "name": "list_tasks",       "input": { "status": "open|done|cancelled|all", "contact_id": "uuid", "limit": "number" } }
-{ "name": "complete_task",    "input": { "task_id": "uuid (required)", "status": "done|open|cancelled" } }
-{ "name": "get_lead_context", "input": { "contact_id": "uuid (required)", "notes_limit": "number" } }
-{ "name": "update_contact",   "input": { "contact_id": "uuid (required)", "email": "string", "phone": "string", "location": "string", "company": "string", "position": "string", "headline": "string" } }
-{ "name": "set_lead_fields",  "input": { "contact_id": "uuid (required)", "fields": "object { field_key: value }" } }
-{ "name": "export_crm",       "input": { "limit": "number (default 5000, max 20000)" } }
+{ "name": "set_deal_stage",     "input": { "contact_id": "uuid (required)", "stage": "string (required)", "note": "string" } }
+{ "name": "log_crm_note",       "input": { "contact_id": "uuid (required)", "summary": "string (required)", "pain_points": "string[]", "sentiment": "positive|neutral|negative" } }
+{ "name": "save_lead_message",  "input": { "contact_id": "uuid (required)", "body": "string (required)", "channel": "email|linkedin", "kind": "string e.g. initial|followup", "subject": "string", "status": "draft|queued|sent", "message_id": "uuid (update existing)" } }
+{ "name": "list_lead_messages", "input": { "contact_id": "uuid (required)", "channel": "email|linkedin", "kind": "string", "limit": "number" } }
+{ "name": "create_task",        "input": { "title": "string (required)", "contact_id": "uuid", "due_at": "ISO 8601", "details": "string" } }
+{ "name": "list_tasks",         "input": { "status": "open|done|cancelled|all", "contact_id": "uuid", "limit": "number" } }
+{ "name": "complete_task",      "input": { "task_id": "uuid (required)", "status": "done|open|cancelled" } }
+{ "name": "get_lead_context",   "input": { "contact_id": "uuid (required)", "notes_limit": "number" } }
+{ "name": "update_contact",     "input": { "contact_id": "uuid (required)", "email": "string", "phone": "string", "location": "string", "company": "string", "position": "string", "headline": "string" } }
+{ "name": "set_lead_fields",    "input": { "contact_id": "uuid (required)", "fields": "object { field_key: value }" } }
+{ "name": "export_crm",         "input": { "limit": "number (default 5000, max 20000)" } }
 ```
+`get_lead_context` returns the full 360° context for a lead — profile, pipeline stage, **custom fields**, **saved outreach messages**, conversation summaries, open tasks, recent LinkedIn interactions and stage history.
 
 ### CRM configuration (stages & custom fields)
 Pipeline stages and custom fields are user-configurable.
