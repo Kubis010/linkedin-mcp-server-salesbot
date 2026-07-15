@@ -14,7 +14,7 @@ It runs as a Supabase Edge Function (Deno + [Hono](https://hono.dev) + [mcp-lite
 | **Endpoint** | `https://app.salesbot.cz/api/mcp` |
 | **Transport** | MCP Streamable HTTP (POST + SSE) |
 | **Auth header** | `x-mcp-api-key: sb_mcp_…` (a Supabase JWT in `Authorization` also works) |
-| **Tool count** | 45 |
+| **Tool count** | 47 |
 | **License** | MIT |
 
 ## How do I connect? (Claude Desktop / Cursor)
@@ -67,9 +67,15 @@ Each tool returns text content; errors return `{ "ok": false, "code": "<CODE>", 
 { "name": "search_linkedin_people",    "input": { "title": "string (required)", "location": "string", "locationId": "string", "network": "['S'|'O']", "limit": "number 1-50" } }
 { "name": "search_google_xray",        "input": { "jobTitle": "string (required)", "location": "string", "keywords": "string[]", "excludeWords": "string[]", "limit": "number 1-100" } }
 { "name": "search_linkedin_navigator", "input": { "search_url": "string (required)", "limit": "number 1-100" } }
+{ "name": "search_job_postings",       "input": { "keywords": "string (required)", "location": "string", "locationId": "string", "seniority": "string[]", "job_type": "string[]", "presence": "string[]", "date_posted": "number", "easy_apply": "boolean", "limit": "number 1-50" } }
+{ "name": "search_web",                "input": { "query": "string (required)", "limit": "number 1-30", "country": "string (default cz)", "language": "string (default cs)" } }
 { "name": "scrape_website",            "input": { "url": "string (required)", "max_chars": "number (default 8000, max 20000)" } }
 ```
 `search_google_xray` saves the profiles it finds into a "Google X-Ray" contact list (deduplicated) and returns their `contact_id`s — ready to enrich, add to a campaign, or push into the CRM.
+
+`search_job_postings` searches LinkedIn job postings via the connected account (Classic search, no Recruiter needed). Returns job offers with company info — great for finding companies actively hiring for a specific role. Combine with `search_linkedin_people` to find the hiring manager.
+
+`search_web` is a general-purpose Google search (not restricted to LinkedIn). Use Google operators like `site:jobs.cz`, `intitle:`, `OR` to search job portals, company websites, or news. Results are NOT saved to contacts — this is a research/discovery tool.
 
 ### Contacts
 ```json
