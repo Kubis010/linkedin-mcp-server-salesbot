@@ -14,7 +14,7 @@ It runs as a Supabase Edge Function (Deno + [Hono](https://hono.dev) + [mcp-lite
 | **Endpoint** | `https://app.salesbot.cz/api/mcp` |
 | **Transport** | MCP Streamable HTTP (POST + SSE) |
 | **Auth header** | `x-mcp-api-key: sb_mcp_…` (a Supabase JWT in `Authorization` also works) |
-| **Tool count** | 48 |
+| **Tool count** | 49 |
 | **License** | MIT |
 
 ## How do I connect? (Claude Desktop / Cursor)
@@ -82,10 +82,13 @@ Each tool returns text content; errors return `{ "ok": false, "code": "<CODE>", 
 
 ### Contacts
 ```json
+{ "name": "upsert_linkedin_contact", "input": { "profile_url": "string (required)", "full_name": "string", "company": "string", "position": "string", "headline": "string" } }
 { "name": "get_contact_profile", "input": { "contact_id": "uuid (required)" } }
 { "name": "list_contacts",       "input": { "list_id": "uuid (required)", "limit": "number", "offset": "number" } }
 { "name": "enrich_contacts",     "input": { "contact_ids": "uuid[] (required, max 8)", "profile_id": "uuid (optional)" } }
 ```
+`upsert_linkedin_contact` is the idempotent path for an exact, already-known LinkedIn profile URL. It creates the contact in the `CRM Imports` list or returns the existing `contact_id`, so CRM integrations can safely call it before `add_contacts_to_campaign` without relying on Google search.
+
 `enrich_contacts` scrapes each contact's full LinkedIn profile via the connected account (headline, location, current company & position, full work history, education, skills) and saves it onto the contact. Great right after `search_google_xray`.
 
 ### Campaigns
