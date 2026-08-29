@@ -84,10 +84,15 @@ Each tool returns text content; errors return `{ "ok": false, "code": "<CODE>", 
 ```json
 { "name": "upsert_linkedin_contact", "input": { "profile_url": "string (required)", "full_name": "string", "company": "string", "position": "string", "headline": "string" } }
 { "name": "get_contact_profile", "input": { "contact_id": "uuid (required)" } }
+{ "name": "list_lead_lists",    "input": {} }
 { "name": "list_contacts",       "input": { "list_id": "uuid (required)", "limit": "number", "offset": "number" } }
 { "name": "enrich_contacts",     "input": { "contact_ids": "uuid[] (required, max 8)", "profile_id": "uuid (optional)" } }
 ```
 `upsert_linkedin_contact` is the idempotent path for an exact, already-known LinkedIn profile URL. It creates the contact in the `CRM Imports` list or returns the existing `contact_id`, so CRM integrations can safely call it before `add_contacts_to_campaign` without relying on Google search.
+
+`list_lead_lists` returns each contact group's `list_id`, name, description and contact count. Pass a returned `list_id` to `list_contacts`.
+
+`search_linkedin_people` and `search_linkedin_navigator` return raw LinkedIn search results. They do not persist contacts; call `upsert_linkedin_contact` for each profile you want to save or add to a campaign.
 
 `enrich_contacts` scrapes each contact's full LinkedIn profile via the connected account (headline, location, current company & position, full work history, education, skills) and saves it onto the contact. Great right after `search_google_xray`.
 
