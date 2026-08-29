@@ -92,6 +92,8 @@ Each tool returns text content; errors return `{ "ok": false, "code": "<CODE>", 
 
 `list_lead_lists` returns each contact group's `list_id`, name, description and contact count. Pass a returned `list_id` to `list_contacts`.
 
+Typical contact workflow: `list_lead_lists` → `list_contacts` → `add_contacts_to_campaign`. Contacts still belong to a lead list, but adding an existing contact to a campaign only requires its `contact_id` and the target `campaign_id`.
+
 `search_linkedin_people` and `search_linkedin_navigator` return raw LinkedIn search results. They do not persist contacts; call `upsert_linkedin_contact` for each profile you want to save or add to a campaign.
 
 `enrich_contacts` scrapes each contact's full LinkedIn profile via the connected account (headline, location, current company & position, full work history, education, skills) and saves it onto the contact. Great right after `search_google_xray`.
