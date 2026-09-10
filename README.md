@@ -124,6 +124,8 @@ Typical contact workflow: `list_lead_lists` → `list_contacts` → `add_contact
 { "name": "get_daily_limits",        "input": { "profile_id": "uuid (optional)" } }
 ```
 
+`publish_linkedin_post` has its own server-side safety limit of **1 published post per LinkedIn account in a rolling 60-minute window**. This applies to both personal and organization posts and is reported as the `posts` quota by `get_daily_limits`. When the quota is exhausted, the tool returns `HOURLY_LIMIT_REACHED` and does not publish the post.
+
 ### Inbox (real‑time)
 ```json
 { "name": "list_inbox_chats",  "input": { "profile_id": "uuid (optional)", "limit": "number 1-50", "cursor": "string" } }
@@ -175,7 +177,8 @@ Success result content (JSON inside the text part):
 ```json
 { "profile_active": true,
   "limits": { "connections": { "used": 0, "limit": 30, "effective_limit": 30 },
-              "messages": { "used": 0, "limit": 40, "effective_limit": 40 } } }
+              "messages": { "used": 0, "limit": 40, "effective_limit": 40 },
+              "posts": { "used": 0, "limit": 1, "effective_limit": 1, "window": "hour" } } }
 ```
 
 Error result content:
@@ -208,6 +211,7 @@ Error result content:
 **Built-in LinkedIn algorithmic protection and daily safety thresholds.** This is a relationship tool, not a mass-mailer — it's designed to send a few highly personalized, human-approved messages, and the server actively prevents bulk abuse:
 
 - Per‑account **daily limits** with gradual ramp‑up for new accounts; per‑hour MCP throttle; a general per‑user request rate limit.
+- An independent per‑account **post limit of 1 published LinkedIn post per rolling hour**, including organization posts.
 - **Human‑in‑the‑loop** approval queue for outbound actions (configurable).
 - **Allowed‑hours / days** windows and randomized anti‑detection delays.
 - **Prompt‑injection defense:** untrusted CRM/inbox text is treated as data; outbound text is scanned before sending.
