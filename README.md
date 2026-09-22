@@ -67,6 +67,10 @@ Each tool returns text content; errors return `{ "ok": false, "code": "<CODE>", 
 { "name": "search_linkedin_people",    "input": { "title": "string (required)", "location": "string", "locationId": "string", "network": "['S'|'O']", "limit": "number 1-50" } }
 { "name": "search_google_xray",        "input": { "jobTitle": "string (required)", "location": "string", "keywords": "string[]", "excludeWords": "string[]", "limit": "number 1-100" } }
 { "name": "search_linkedin_navigator", "input": { "search_url": "string (required)", "limit": "number 1-100" } }
+{ "name": "import_linkedin_company_list", "input": { "search_url": "string (required)", "list_name": "string (required)", "limit": "number", "cursor": "string", "save_to_crm": "boolean" } }
+{ "name": "list_company_lists",          "input": {} }
+{ "name": "list_companies",              "input": { "company_list_id": "uuid (required)", "limit": "number", "offset": "number", "query": "string" } }
+{ "name": "update_company_research",     "input": { "prospect_company_id": "uuid (required)", "web_research": "string (required)", "website": "string", "domain": "string", "research_urls": "string[]" } }
 { "name": "search_job_postings",       "input": { "keywords": "string (required)", "location": "string", "locationId": "string", "seniority": "string[]", "job_type": "string[]", "presence": "string[]", "date_posted": "number", "easy_apply": "boolean", "limit": "number 1-50" } }
 { "name": "search_web",                "input": { "query": "string (required)", "limit": "number 1-30", "country": "string (default cz)", "language": "string (default cs)" } }
 { "name": "get_job_posting_details",   "input": { "job_id": "string (required)" } }
@@ -80,9 +84,11 @@ Each tool returns text content; errors return `{ "ok": false, "code": "<CODE>", 
 
 `get_job_posting_details` takes a `job_id` from `search_job_postings` and returns the full posting — most importantly `hiring_team`, the recruiter or hiring manager who posted the role, with their LinkedIn id and whether a free InMail is available. Also returns `applicants_counter` / `views_counter` as urgency signals. Typical flow: `search_job_postings` → `get_job_posting_details` → `enrich_contacts` → campaign.
 
+Company/account-list workflow: `import_linkedin_company_list` → `list_companies` → `search_web` / `scrape_website` → `update_company_research` → `search_linkedin_people` → `upsert_linkedin_contact` with the returned `prospect_company_id`. Companies are stored separately from people and can enter CRM before a decision-maker is known.
+
 ### Contacts
 ```json
-{ "name": "upsert_linkedin_contact", "input": { "profile_url": "string (required)", "full_name": "string", "company": "string", "position": "string", "headline": "string" } }
+{ "name": "upsert_linkedin_contact", "input": { "profile_url": "string (required)", "full_name": "string", "company": "string", "position": "string", "headline": "string", "prospect_company_id": "uuid" } }
 { "name": "get_contact_profile", "input": { "contact_id": "uuid (required)" } }
 { "name": "list_lead_lists",    "input": {} }
 { "name": "list_contacts",       "input": { "list_id": "uuid (required)", "limit": "number", "offset": "number" } }
@@ -137,6 +143,7 @@ Typical contact workflow: `list_lead_lists` → `list_contacts` → `add_contact
 ### CRM (pipeline, notes, tasks, message store)
 The CRM is a persistent pipeline separate from contacts. A lead enters it when added to a campaign, or when any of these tools first touch it. It also acts as a durable store for generated outreach copy: save email / LinkedIn drafts and follow-ups with `save_lead_message`, read them back with `list_lead_messages` or `get_lead_context`, then send them through the right channel's own MCP (e.g. Smartlead for email) — this server never sends them itself.
 ```json
+{ "name": "add_companies_to_crm", "input": { "prospect_company_ids": "uuid[] (required, max 100)" } }
 { "name": "set_deal_stage",     "input": { "contact_id": "uuid (required)", "stage": "string (required)", "note": "string" } }
 { "name": "log_crm_note",       "input": { "contact_id": "uuid (required)", "summary": "string (required)", "pain_points": "string[]", "sentiment": "positive|neutral|negative" } }
 { "name": "save_lead_message",  "input": { "contact_id": "uuid (required)", "body": "string (required)", "channel": "email|linkedin", "kind": "string e.g. initial|followup", "subject": "string", "status": "draft|queued|sent", "message_id": "uuid (update existing)" } }
