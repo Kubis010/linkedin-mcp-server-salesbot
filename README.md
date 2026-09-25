@@ -4,6 +4,8 @@
 
 It runs as a Supabase Edge Function (Deno + [Hono](https://hono.dev) + [mcp-lite](https://www.npmjs.com/package/mcp-lite)) exposing the MCP **Streamable HTTP** transport. LinkedIn actions go through a third‑party LinkedIn integration provider; LinkedIn credentials are never stored by the AI.
 
+> Product page and documentation: [https://salesbot.cz/en/mcp-server](https://salesbot.cz/en/mcp-server)
+
 - **Keywords:** model context protocol, mcp server, linkedin api, linkedin automation, claude desktop, cursor, ai agents, sales automation.
 - **Compatible clients:** Claude Desktop, Claude API/MCP, Cursor, any MCP Streamable‑HTTP client.
 
