@@ -76,7 +76,6 @@ Each tool returns text content; errors return `{ "ok": false, "code": "<CODE>", 
 { "name": "search_job_postings",       "input": { "keywords": "string (required)", "location": "string", "locationId": "string", "seniority": "string[]", "job_type": "string[]", "presence": "string[]", "date_posted": "number", "easy_apply": "boolean", "limit": "number 1-50" } }
 { "name": "search_web",                "input": { "query": "string (required)", "limit": "number 1-30", "country": "string (default cz)", "language": "string (default cs)" } }
 { "name": "get_job_posting_details",   "input": { "job_id": "string (required)" } }
-{ "name": "scrape_website",            "input": { "url": "string (required)", "max_chars": "number (default 8000, max 20000)" } }
 ```
 `search_google_xray` saves the profiles it finds into a "Google X-Ray" contact list (deduplicated) and returns their `contact_id`s — ready to enrich, add to a campaign, or push into the CRM.
 
@@ -86,7 +85,7 @@ Each tool returns text content; errors return `{ "ok": false, "code": "<CODE>", 
 
 `get_job_posting_details` takes a `job_id` from `search_job_postings` and returns the full posting — most importantly `hiring_team`, the recruiter or hiring manager who posted the role, with their LinkedIn id and whether a free InMail is available. Also returns `applicants_counter` / `views_counter` as urgency signals. Typical flow: `search_job_postings` → `get_job_posting_details` → `enrich_contacts` → campaign.
 
-Company/account-list workflow: `import_linkedin_company_list` → `list_companies` → `search_web` / `scrape_website` → `update_company_research` → `search_linkedin_people` → `upsert_linkedin_contact` with the returned `prospect_company_id`. Companies are stored separately from people and can enter CRM before a decision-maker is known.
+Company/account-list workflow: `import_linkedin_company_list` → `list_companies` → `search_web` → `update_company_research` → `search_linkedin_people` → `upsert_linkedin_contact` with the returned `prospect_company_id`. Companies are stored separately from people and can enter CRM before a decision-maker is known.
 
 ### Contacts
 ```json
@@ -212,7 +211,6 @@ Error result content:
 | `APPROVAL_REQUIRED` | queued for human approval before sending |
 | `SAFETY_BLOCKED` | text looks like prompt‑injection / unrequested URL |
 | `REPLY_LIMIT_REACHED` | already 2 AI replies in this conversation |
-| `SCRAPE_LIMIT_REACHED` | weekly web‑scrape quota reached |
 | `VALIDATION_ERROR` / `NOT_FOUND` / `UPSTREAM_ERROR` | bad input / not found / upstream failure |
 
 ## Safety & responsible use
