@@ -19,6 +19,19 @@ It runs as a Supabase Edge Function (Deno + [Hono](https://hono.dev) + [mcp-lite
 | **Tool count** | 49 |
 | **License** | MIT |
 
+## Install as a Claude Code plugin
+
+The repository is also a Claude Code plugin marketplace. The plugin connects the same MCP server and adds three skills that tell Claude how to work with Salesbot: `salesbot-outreach` (find, enrich and contact a few well-matched leads), `salesbot-campaign` (set up, fill, approve and start a LinkedIn campaign) and `salesbot-email` (send e-mails and react to Salesbot's checks).
+
+```bash
+claude plugin marketplace add Kubis010/linkedin-mcp-server-salesbot
+claude plugin install salesbot@salesbot
+```
+
+Claude Code asks for your `sb_mcp_…` key when the plugin is enabled and keeps it in the system's secure credential store, not in a settings file. The plugin talks only to `https://app.salesbot.cz/api/mcp`; it contains no code that runs on your machine.
+
+If you already added the Salesbot server to Claude Code by hand, remove that entry (`claude mcp remove <name>`) after installing the plugin, otherwise every tool shows up twice.
+
 ## How do I connect? (Claude Desktop / Cursor)
 
 Add this to your MCP client config. Get the `sb_mcp_…` key in the Salesbot app under **Settings → MCP**.

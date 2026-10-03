@@ -1,0 +1,16 @@
+{
+  "name": "salesbot",
+  "owner": {
+    "name": "Salesbot",
+    "url": "https://salesbot.cz"
+  },
+  "metadata": {
+    "description": "Salesbot plugin for Claude Code: LinkedIn outreach, campaigns, checked e-mails and a sales CRM."
+  },
+  "plugins": [
+    {
+      "name": "salesbot",
+      "source": "./"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "salesbot": {
+      "type": "http",
+      "url": "https://app.salesbot.cz/api/mcp",
+      "headers": {
+        "x-mcp-api-key": "${user_config.api_key}",
+        "Accept": "application/json, text/event-stream"
+      }
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "name": "salesbot",
+  "version": "1.0.0",
+  "description": "Connects Claude to Salesbot: find and enrich LinkedIn leads, run safety-limited LinkedIn campaigns with human or AI approval, send checked e-mails through Smartlead/Instantly or your own mailbox, and keep everything in a built-in sales CRM.",
+  "author": {
+    "name": "Salesbot",
+    "url": "https://salesbot.cz"
+  },
+  "homepage": "https://salesbot.cz/en/mcp-server",
+  "repository": "https://github.com/Kubis010/linkedin-mcp-server-salesbot",
+  "license": "MIT",
+  "keywords": [
+    "linkedin",
+    "sales",
+    "outreach",
+    "crm",
+    "mcp",
+    "email"
+  ],
+  "userConfig": {
+    "api_key": {
+      "type": "string",
+      "title": "Salesbot MCP API key",
+      "description": "Your sb_mcp_… key from the Salesbot app → Settings → MCP.",
+      "sensitive": true,
+      "required": true
+    }
+  }
+}
