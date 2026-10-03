@@ -16,7 +16,7 @@ It runs as a Supabase Edge Function (Deno + [Hono](https://hono.dev) + [mcp-lite
 | **Endpoint** | `https://app.salesbot.cz/api/mcp` |
 | **Transport** | MCP Streamable HTTP (POST + SSE) |
 | **Auth header** | `x-mcp-api-key: sb_mcp_…` (a Supabase JWT in `Authorization` also works) |
-| **Tool count** | 49 |
+| **Tool count** | 80 |
 | **License** | MIT |
 
 ## Install as a Claude Code plugin
@@ -107,7 +107,17 @@ Company/account-list workflow: `import_linkedin_company_list` → `list_companie
 { "name": "list_lead_lists",    "input": {} }
 { "name": "list_contacts",       "input": { "list_id": "uuid (required)", "limit": "number", "offset": "number" } }
 { "name": "enrich_contacts",     "input": { "contact_ids": "uuid[] (required, max 8)", "profile_id": "uuid (optional)" } }
+{ "name": "create_lead_list",    "input": { "name": "string (required)", "description": "string" } }
+{ "name": "add_contacts_to_list", "input": { "list_id": "uuid (required)", "contact_ids": "uuid[] (required)" } }
+{ "name": "remove_contacts_from_list", "input": { "contact_ids": "uuid[] (required)", "list_id": "uuid" } }
+{ "name": "sync_linkedin_connections", "input": { "cursor": "string", "sync_id": "string", "limit": "number ≤500" } }
+{ "name": "list_blacklist",      "input": { "query": "string", "limit": "number", "offset": "number" } }
+{ "name": "check_blacklist",     "input": { "contact_id": "uuid", "company": "string", "domain": "string" } }
+{ "name": "delete_contacts",     "input": { "contact_ids": "uuid[] (required)", "confirm": "true (required)", "delete_crm_leads": "boolean", "force": "boolean" } }
 ```
+Every contact lives in exactly one list: `add_contacts_to_list` moves contacts, `remove_contacts_from_list` moves them back to `CRM Imports` (nothing is deleted). `sync_linkedin_connections` pages through your own 1st-degree connections (max 500 per page, paced by the server). `list_blacklist` / `check_blacklist` read the company-wide blacklist.
+
+`delete_contacts` deletes permanently, including campaign history. Call it only on the user's explicit request, after showing them the contacts, with `confirm: true`. To stop outreach to someone, use `exclude_contacts_from_campaign` instead.
 `upsert_linkedin_contact` is the idempotent path for an exact, already-known LinkedIn profile URL. It creates the contact in the `CRM Imports` list or returns the existing `contact_id`, so CRM integrations can safely call it before `add_contacts_to_campaign` without relying on Google search.
 
 `list_lead_lists` returns each contact group's `list_id`, name, description and contact count. Pass a returned `list_id` to `list_contacts`.
@@ -121,20 +131,41 @@ Typical contact workflow: `list_lead_lists` → `list_contacts` → `add_contact
 ### Campaigns
 ```json
 { "name": "list_campaigns",           "input": { "status": "draft|running|paused|completed|stopped (optional)" } }
-{ "name": "create_campaign",          "input": { "name": "string (required)", "profile_id": "uuid (required)", "description": "string", "daily_limit": "number", "sender_context": "string", "steps": "[{ action: 'connect'|'message'|'visit', delay_hours, use_ai, ai_prompt, ai_template, send_without_message }] (required)" } }
+{ "name": "create_campaign",          "input": { "name": "string (required)", "profile_id": "uuid (required)", "description": "string", "daily_limit": "number", "sender_context": "string", "steps": "[{ action: 'connect'|'message'|'visit', delay_hours, use_ai, ai_prompt, ai_template, message_mode: 'template'|'creative', send_without_message }] (required)" } }
 { "name": "update_campaign_settings", "input": { "campaign_id": "uuid (required)", "name": "string", "description": "string", "daily_limit": "number", "sender_context": "string", "auto_approve_messages": "boolean", "status": "running|paused|draft|stopped" } }
 { "name": "start_campaign",           "input": { "campaign_id": "uuid (required)" } }
 { "name": "stop_campaign",            "input": { "campaign_id": "uuid (required)" } }
 { "name": "add_contacts_to_campaign", "input": { "campaign_id": "uuid (required)", "contact_ids": "uuid[] (required)" } }
+{ "name": "exclude_contacts_from_campaign", "input": { "campaign_id": "uuid (required)", "contact_ids": "uuid[] (required)", "reason": "string" } }
+{ "name": "list_campaign_queue",      "input": { "campaign_id": "uuid (required)", "limit": "number" } }
 ```
+`message_mode` decides how a message step uses its sample (`ai_template`): `template` sends the sample word for word and the AI only fills its fields (e.g. `[Firma]` → "Škoda Auto"); `creative` has the AI write a new message for each lead from `ai_prompt`, with the sample only as a style example. The campaign's `sender_context` ("About me") is used only where the prompt says `{{o_mne}}`. Links in the prompt or sample are kept as written.
+
+`exclude_contacts_from_campaign` stops all further outreach to those contacts but keeps their history. `list_campaign_queue` shows each contact's state, invitation status and the next tool to call.
 
 ### AI messaging (write → approve → send)
 ```json
+{ "name": "prepare_campaign_messages", "input": { "campaign_id": "uuid (required)", "limit": "number ≤10" } }
 { "name": "generate_campaign_message", "input": { "campaign_contact_id": "uuid (required)", "step_id": "uuid (required)", "custom_instructions": "string" } }
 { "name": "list_pending_approvals",    "input": { "campaign_id": "uuid", "limit": "number" } }
 { "name": "approve_message",           "input": { "campaign_contact_id": "uuid (required)", "edited_messages": "[{step_id, message}]", "skip_gpt_check": "boolean" } }
 { "name": "reject_message",            "input": { "campaign_contact_id": "uuid (required)", "reason": "string (required)" } }
+{ "name": "list_mcp_pending_actions",  "input": { "action_type": "string", "limit": "number" } }
 ```
+`prepare_campaign_messages` queues drafts for up to 10 pending contacts per call; repeat while `remaining_pending` > 0. When the campaign has AI approval on (`auto_approve_messages`), Salesbot checks each draft — the contact's name and gender, company, leftover placeholders, signature and grammar — and approves only what passes; the rest waits in `list_pending_approvals`. `list_mcp_pending_actions` lists one-off messages and invitations waiting for the user's approval (read-only).
+
+### E-mail (Smartlead, Instantly or your own mailbox)
+```json
+{ "name": "list_email_integrations", "input": {} }
+{ "name": "list_email_campaigns",    "input": { "provider": "smartlead|instantly (required)" } }
+{ "name": "send_email",              "input": { "provider": "smartlead|instantly|mailbox (required)", "provider_campaign_id": "string (required)", "body": "string (required)", "subject": "string", "followup_body": "string", "crm_lead_id": "uuid", "contact_id": "uuid", "email": "string" } }
+{ "name": "list_email_outreach",     "input": { "status": "string", "crm_lead_id": "uuid", "contact_id": "uuid", "limit": "number" } }
+{ "name": "get_email_status",        "input": { "outreach_id": "uuid (required)" } }
+{ "name": "cancel_email",            "input": { "outreach_id": "uuid (required)", "reason": "string" } }
+```
+`send_email` sends a personal e-mail to one person. With Smartlead / Instantly, pass a campaign id from `list_email_campaigns`; its sequence must use `{{email_subject}}` and `{{email_body}}`, and the provider then sends on its own schedule. With `provider: "mailbox"`, pass the `mailbox_id` from `list_email_integrations`; Salesbot sends it from your own Outlook / IMAP mailbox within your sending hours, a few minutes apart and capped per day.
+
+Every e-mail is checked before it is sent: the greeting (right name, and pane/paní by the contact's gender), the company, leftover placeholders such as `{{company}}`, Czech grammar, and no signature in the body when the mailbox adds its own. A failed check returns `AI_CHECK_FAILED` with the reason and nothing is sent; fix it and call again. A second failure goes to the user's manual approval. If approval is required, the e-mail waits as `pending_approval`. `cancel_email` withdraws an e-mail that has not gone out yet.
 
 ### Direct LinkedIn actions
 ```json
@@ -155,9 +186,12 @@ Typical contact workflow: `list_lead_lists` → `list_contacts` → `add_contact
 ```
 
 ### CRM (pipeline, notes, tasks, message store)
-The CRM is a persistent pipeline separate from contacts. A lead enters it when added to a campaign, or when any of these tools first touch it. It also acts as a durable store for generated outreach copy: save email / LinkedIn drafts and follow-ups with `save_lead_message`, read them back with `list_lead_messages` or `get_lead_context`, then send them through the right channel's own MCP (e.g. Smartlead for email) — this server never sends them itself.
+The CRM is a persistent pipeline separate from contacts. A lead enters it when added to a campaign, or when any of these tools first touch it. It also acts as a durable store for generated outreach copy: save email / LinkedIn drafts and follow-ups with `save_lead_message`, read them back with `list_lead_messages` or `get_lead_context`, and send e-mails with `send_email` (see E-mail above).
 ```json
 { "name": "add_companies_to_crm", "input": { "prospect_company_ids": "uuid[] (required, max 100)" } }
+{ "name": "add_contacts_to_crm", "input": { "contact_ids": "uuid[] (required)" } }
+{ "name": "search_crm_leads",   "input": { "query": "string", "stage": "string", "campaign_id": "uuid", "list_id": "uuid", "crm_company_id": "uuid", "sort_by": "string", "sort_direction": "asc|desc", "limit": "number", "offset": "number" } }
+{ "name": "update_crm_lead",    "input": { "contact_id": "uuid", "crm_lead_id": "uuid", "stage": "string", "deal_value": "number", "clear_deal_value": "boolean", "email": "string", "company": "string", "note": "string" } }
 { "name": "set_deal_stage",     "input": { "contact_id": "uuid (required)", "stage": "string (required)", "note": "string" } }
 { "name": "log_crm_note",       "input": { "contact_id": "uuid (required)", "summary": "string (required)", "pain_points": "string[]", "sentiment": "positive|neutral|negative" } }
 { "name": "save_lead_message",  "input": { "contact_id": "uuid (required)", "body": "string (required)", "channel": "email|linkedin", "kind": "string e.g. initial|followup", "subject": "string", "status": "draft|queued|sent", "message_id": "uuid (update existing)" } }
@@ -169,7 +203,18 @@ The CRM is a persistent pipeline separate from contacts. A lead enters it when a
 { "name": "update_contact",     "input": { "contact_id": "uuid (required)", "email": "string", "phone": "string", "location": "string", "company": "string", "position": "string", "headline": "string" } }
 { "name": "set_lead_fields",    "input": { "contact_id": "uuid (required)", "fields": "object { field_key: value }" } }
 { "name": "export_crm",         "input": { "limit": "number (default 5000, max 20000)" } }
+{ "name": "delete_crm_leads",   "input": { "crm_lead_ids": "uuid[] (required)", "confirm": "true (required)" } }
 ```
+Companies (accounts) are created automatically from lead company names and LinkedIn company imports:
+```json
+{ "name": "list_crm_companies",  "input": { "query": "string", "stage": "string", "limit": "number", "offset": "number" } }
+{ "name": "get_crm_company",     "input": { "crm_company_id": "uuid (required)" } }
+{ "name": "update_crm_company",  "input": { "crm_company_id": "uuid (required)", "notes": "string", "append_notes": "boolean", "name": "string", "website": "string", "industry": "string", "location": "string", "headcount": "string" } }
+{ "name": "merge_crm_companies", "input": { "keep_crm_company_id": "uuid (required)", "merge_crm_company_id": "uuid (required)" } }
+{ "name": "delete_crm_company",  "input": { "crm_company_id": "uuid (required)", "confirm": "true (required)", "delete_leads": "boolean" } }
+```
+`delete_crm_leads`, `delete_crm_company` and `merge_crm_companies` cannot be undone: use them only on the user's explicit request, after showing them what will change.
+
 `get_lead_context` returns the full 360° context for a lead — profile, pipeline stage, **custom fields**, **saved outreach messages**, conversation summaries, open tasks, recent LinkedIn interactions and stage history.
 
 ### CRM configuration (stages & custom fields)
@@ -222,6 +267,8 @@ Error result content:
 | `OUTSIDE_ALLOWED_HOURS` | outside the account's sending window |
 | `BLACKLISTED` | target company/domain blacklisted |
 | `APPROVAL_REQUIRED` | queued for human approval before sending |
+| `AI_CHECK_FAILED` | e-mail did not pass Salesbot's check — fix what the error says and send again |
+| `NO_EMAIL` / `INVALID_EMAIL` / `DUPLICATE_OUTREACH` | no address / invalid address / already queued in that e-mail campaign |
 | `SAFETY_BLOCKED` | text looks like prompt‑injection / unrequested URL |
 | `REPLY_LIMIT_REACHED` | already 2 AI replies in this conversation |
 | `VALIDATION_ERROR` / `NOT_FOUND` / `UPSTREAM_ERROR` | bad input / not found / upstream failure |
