@@ -28,9 +28,13 @@ claude plugin marketplace add Kubis010/linkedin-mcp-server-salesbot
 claude plugin install salesbot@salesbot
 ```
 
-Claude Code asks for your `sb_mcp_…` key when the plugin is enabled and keeps it in the system's secure credential store, not in a settings file. The plugin talks only to `https://app.salesbot.cz/api/mcp`; it contains no code that runs on your machine.
+Then enter your `sb_mcp_…` key (Salesbot app → Settings → MCP). The install command does not ask for it: start `claude`, open `/plugin`, switch to the **Installed** tab, select **salesbot** → **Configure options** and paste the key. Claude Code keeps it in the system's secure credential store, not in a settings file. Restart Claude Code afterwards. `/mcp` should then list `plugin:salesbot:salesbot`.
 
-If you already added the Salesbot server to Claude Code by hand, remove that entry (`claude mcp remove <name>`) after installing the plugin, otherwise every tool shows up twice.
+The plugin talks only to `https://app.salesbot.cz/api/mcp`; it contains no code that runs on your machine.
+
+Remove any other Salesbot connection first:
+- **A Salesbot connector on claude.ai** (Settings → Connectors) takes precedence over the plugin. The plugin's server is then not loaded, and the connector cannot send the API key, so every tool returns `AUTH_MISSING`. Remove the connector and restart Claude Code.
+- **A Salesbot server added to Claude Code by hand**: remove it with `claude mcp remove <name>`, otherwise every tool shows up twice.
 
 ## How do I connect? (Claude Desktop / Cursor)
 
