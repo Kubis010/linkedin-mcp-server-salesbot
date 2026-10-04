@@ -2,7 +2,7 @@
 
 > **What is this?** `linkedin-mcp-server-salesbot` is a **Model Context Protocol - MCP server for AI‑assisted LinkedIn relationship operations**. It lets AI assistants — **Claude Desktop, ChatGPT, Cursor** — help you research and organize professional contacts, draft deeply personalized messages **for your review and approval**, sync inbox conversations, enrich profiles, and pull web context — all under your direction. It's built for **hyper‑targeted, meaningful outreach** (find 5 ideal contacts, read their recent posts, write 5 thoughtful notes), **not bulk blasting**. Every send is gated by **human‑in‑the‑loop approval** and **enforced, server‑side daily/hourly safety thresholds** that keep your LinkedIn account within safe limits.
 
-It runs as a Supabase Edge Function (Deno + [Hono](https://hono.dev) + [mcp-lite](https://www.npmjs.com/package/mcp-lite)) exposing the MCP **Streamable HTTP** transport. LinkedIn actions go through a third‑party LinkedIn integration provider; LinkedIn credentials are never stored by the AI.
+It runs as a hosted service at `app.salesbot.cz` and speaks the MCP **Streamable HTTP** transport. Users sign in with OAuth 2.1 (or use an API key in clients that cannot sign in). LinkedIn actions go through a third‑party LinkedIn integration provider; LinkedIn credentials are never stored by the AI.
 
 > Product page and documentation: [https://salesbot.cz/en/mcp-server](https://salesbot.cz/en/mcp-server)
 
@@ -44,6 +44,13 @@ You can see and remove connected apps in the Salesbot app under Settings → MCP
 
 Clients that cannot sign in (Codex, Cursor, scripts) keep using an API key, see below.
 
+## What the plugin runs and sends
+
+- **Runs nothing on your machine.** The plugin is three Markdown skills and one remote MCP server entry; there are no hooks, scripts or binaries.
+- **Talks to one server:** `https://app.salesbot.cz/api/mcp` (Salesbot, operated by Sales Robots s.r.o.). Sign-in uses OAuth 2.1 on `app.salesbot.cz`.
+- **What reaches Salesbot:** the arguments of the tools Claude calls (for example a search query, a contact id, the text of a message or e-mail you asked to send). Salesbot then acts in your connected LinkedIn account and e-mail tools within your limits and approval settings. It does not read your conversation or local files.
+- **Data handling:** see the [privacy policy](https://salesbot.cz/en/privacy) and [terms](https://salesbot.cz/en/terms). Remove access at any time in the Salesbot app → Settings → MCP → Connected apps.
+
 ## Connect with an API key (Cursor, Codex, Claude Desktop config)
 
 Add this to your MCP client config. Get the `sb_mcp_…` key in the Salesbot app under **Settings → MCP**.
@@ -62,7 +69,7 @@ Add this to your MCP client config. Get the `sb_mcp_…` key in the Salesbot app
 }
 ```
 
-> **Important:** send the key in the **`x-mcp-api-key`** header, **not** `Authorization: Bearer`. The Supabase API gateway rejects unknown Bearer tokens before they reach the server.
+> **Important:** send the API key in the **`x-mcp-api-key`** header, **not** `Authorization: Bearer`; `Authorization` is reserved for OAuth access tokens.
 
 ## Authentication
 
@@ -292,32 +299,20 @@ Error result content:
 - Per‑account **daily limits** with gradual ramp‑up for new accounts; per‑hour MCP throttle; a general per‑user request rate limit.
 - An independent per‑account **post limit of 1 published LinkedIn post per rolling hour**, including organization posts.
 - **Human‑in‑the‑loop** approval queue for outbound actions (configurable).
-- **Allowed‑hours / days** windows and randomized anti‑detection delays.
+- **Allowed‑hours / days** windows and randomized, human‑paced delays between actions.
 - **Prompt‑injection defense:** untrusted CRM/inbox text is treated as data; outbound text is scanned before sending.
 - **Inbox:** max 2 AI replies per conversation (anti‑overflow); replies are injection‑scanned.
 - **Account protection:** on a LinkedIn block (provider 403) campaigns auto‑pause and the user is emailed.
 
 ## FAQ
 
-**Which AI clients work?** Any MCP Streamable‑HTTP client — Claude Desktop, the Claude API, Cursor, and similar.
-
-**Why `x-mcp-api-key` and not `Authorization`?** The Supabase gateway validates `Authorization` bearer tokens and rejects unknown ones; the custom header passes through untouched.
+**Which AI clients work?** Any MCP Streamable‑HTTP client — claude.ai, Cowork, Claude Code, Claude Desktop, the Claude API, Cursor, Codex and similar.
 
 **Does the AI see my LinkedIn password?** No. Authentication happens through a hosted provider flow (white‑labeled at `auth.salesbot.cz`); the MCP server only uses an account handle.
 
 **Can the AI send messages without me?** Only if you disable approval. By default outbound actions are queued for human approval.
 
 **Is it safe for my LinkedIn account?** Daily/hourly limits, ramp‑up, allowed‑hours, randomized delays, and auto‑pause on a detected block are all enforced server‑side.
-
-## Deploy
-
-Runs on the Salesbot Supabase backend. With the [Supabase CLI](https://supabase.com/docs/guides/cli):
-
-```bash
-supabase functions deploy mcp-server --no-verify-jwt --project-ref <your-project-ref>
-```
-
-Required function secrets: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ANON_KEY`, the LinkedIn‑provider credentials, `CRON_SECRET`, `APP_URL`. The server does its own auth, hence `--no-verify-jwt`.
 
 ## License
 

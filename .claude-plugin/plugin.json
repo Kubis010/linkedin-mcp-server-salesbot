@@ -16,5 +16,10 @@
     "crm",
     "mcp",
     "email"
-  ]
+  ],
+  "icon": "./logo.png",
+  "documentationUrl": "https://salesbot.cz/en/mcp-server",
+  "supportUrl": "https://github.com/Kubis010/linkedin-mcp-server-salesbot/issues",
+  "privacyPolicyUrl": "https://salesbot.cz/en/privacy",
+  "termsOfServiceUrl": "https://salesbot.cz/en/terms"
 }
