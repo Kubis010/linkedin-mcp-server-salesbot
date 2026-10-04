@@ -15,28 +15,29 @@ It runs as a Supabase Edge Function (Deno + [Hono](https://hono.dev) + [mcp-lite
 |---|---|
 | **Endpoint** | `https://app.salesbot.cz/api/mcp` |
 | **Transport** | MCP Streamable HTTP (POST + SSE) |
-| **Auth header** | `x-mcp-api-key: sb_mcp_…` (a Supabase JWT in `Authorization` also works) |
+| **Auth** | OAuth 2.1 sign-in, or `x-mcp-api-key: sb_mcp_…` header |
 | **Tool count** | 80 |
 | **License** | MIT |
 
-## Install as a Claude Code plugin
+## Connect with sign-in (OAuth): claude.ai, Cowork, Claude Code
 
-The repository is also a Claude Code plugin marketplace. The plugin connects the same MCP server and adds three skills that tell Claude how to work with Salesbot: `salesbot-outreach` (find, enrich and contact a few well-matched leads), `salesbot-campaign` (set up, fill, approve and start a LinkedIn campaign) and `salesbot-email` (send e-mails and react to Salesbot's checks).
+The server supports OAuth 2.1, so no key needs to be copied:
+
+- **claude.ai / Cowork:** Settings → Connectors → *Add custom connector* → `https://app.salesbot.cz/api/mcp` → *Connect*. Sign in to Salesbot and allow access on the consent page.
+- **Claude Code plugin** (adds three skills on top of the connection: `salesbot-outreach`, `salesbot-campaign` and `salesbot-email`):
 
 ```bash
 claude plugin marketplace add Kubis010/linkedin-mcp-server-salesbot
 claude plugin install salesbot@salesbot
 ```
 
-Then enter your `sb_mcp_…` key (Salesbot app → Settings → MCP). The install command does not ask for it: start `claude`, open `/plugin`, switch to the **Installed** tab, select **salesbot** → **Configure options** and paste the key. Claude Code keeps it in the system's secure credential store, not in a settings file. Restart Claude Code afterwards. `/mcp` should then list `plugin:salesbot:salesbot`.
+  Then start `claude`, run `/mcp`, select the Salesbot server and sign in.
 
-The plugin talks only to `https://app.salesbot.cz/api/mcp`; it contains no code that runs on your machine.
+You can see and remove connected apps in the Salesbot app under Settings → MCP → Connected apps. The plugin contains no code that runs on your machine; it only talks to `https://app.salesbot.cz/api/mcp`.
 
-Remove any other Salesbot connection first:
-- **A Salesbot connector on claude.ai** (Settings → Connectors) takes precedence over the plugin. The plugin's server is then not loaded, and the connector cannot send the API key, so every tool returns `AUTH_MISSING`. Remove the connector and restart Claude Code.
-- **A Salesbot server added to Claude Code by hand**: remove it with `claude mcp remove <name>`, otherwise every tool shows up twice.
+Clients that cannot sign in (Codex, Cursor, scripts) keep using an API key, see below.
 
-## How do I connect? (Claude Desktop / Cursor)
+## Connect with an API key (Cursor, Codex, Claude Desktop config)
 
 Add this to your MCP client config. Get the `sb_mcp_…` key in the Salesbot app under **Settings → MCP**.
 
@@ -58,8 +59,8 @@ Add this to your MCP client config. Get the `sb_mcp_…` key in the Salesbot app
 
 ## Authentication
 
+- **OAuth 2.1** (authorization code + PKCE, dynamic client registration). A request without credentials gets `401` with `WWW-Authenticate: Bearer resource_metadata="https://app.salesbot.cz/.well-known/oauth-protected-resource"`; clients discover the authorization server from there. The access token goes in `Authorization: Bearer`.
 - **MCP API key** (`sb_mcp_…`) — long‑lived; generated in the Salesbot app, stored only as a SHA‑256 hash. Send in `x-mcp-api-key`.
-- **Supabase JWT** — a signed‑in user session token in `Authorization: Bearer`.
 - An active subscription/trial is required.
 
 ## How do I authenticate LinkedIn?
