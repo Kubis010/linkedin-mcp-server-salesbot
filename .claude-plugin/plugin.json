@@ -1,7 +1,8 @@
 {
   "name": "salesbot",
-  "version": "2.0.0",
-  "description": "Connects Claude to Salesbot: find and enrich LinkedIn leads, run safety-limited LinkedIn campaigns with human or AI approval, send checked e-mails through Smartlead/Instantly or your own mailbox, and keep everything in a built-in sales CRM. Sign in with your Salesbot account (OAuth).",
+  "displayName": "Salesbot – LinkedIn Outreach & CRM",
+  "version": "2.0.1",
+  "description": "LinkedIn outreach, campaigns and a sales CRM for Claude, with human or AI approval and server-side safety limits.",
   "author": {
     "name": "Salesbot",
     "url": "https://salesbot.cz"
