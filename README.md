@@ -33,6 +33,13 @@ claude plugin install salesbot@salesbot
 
   Then start `claude`, run `/mcp`, select the Salesbot server and sign in.
 
+  To update later, refresh the marketplace first (otherwise the old version is reported as current):
+
+```bash
+claude plugin marketplace update salesbot
+claude plugin update salesbot@salesbot
+```
+
 You can see and remove connected apps in the Salesbot app under Settings → MCP → Connected apps. The plugin contains no code that runs on your machine; it only talks to `https://app.salesbot.cz/api/mcp`.
 
 Clients that cannot sign in (Codex, Cursor, scripts) keep using an API key, see below.
