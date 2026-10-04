@@ -17,6 +17,8 @@ Salesbot is built for a few well-chosen people, not bulk blasting. Prefer 5 stro
 - Companies first: `import_linkedin_company_list` → `list_companies` → research with `search_web` → `update_company_research` → find the decision-maker with `search_linkedin_people`.
 - Companies that are hiring: `search_job_postings` → `get_job_posting_details` (its `hiring_team` is the person to contact).
 
+- About a company: `read_company_website` with its homepage (max 60 a day) gives a short profile and generic e-mails; save the summary with its source URLs via `update_company_research`. Never put a found e-mail into outreach without the user's decision.
+
 Save every person you want to keep with `upsert_linkedin_contact` (pass `prospect_company_id` when you have it). Check `check_blacklist` before contacting a company.
 
 ## Research
