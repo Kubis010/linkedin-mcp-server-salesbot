@@ -16,7 +16,7 @@ It runs as a hosted service at `app.salesbot.cz` and speaks the MCP **Streamable
 | **Endpoint** | `https://app.salesbot.cz/api/mcp` |
 | **Transport** | MCP Streamable HTTP (POST + SSE) |
 | **Auth** | OAuth 2.1 sign-in, or `x-mcp-api-key: sb_mcp_…` header |
-| **Tool count** | 82 |
+| **Tool count** | 83 |
 | **License** | MIT |
 
 ## Connect with sign-in (OAuth): claude.ai, Cowork, Claude Code
@@ -218,6 +218,7 @@ The CRM is a persistent pipeline separate from contacts. A lead enters it when a
 ```json
 { "name": "add_companies_to_crm", "input": { "prospect_company_ids": "uuid[] (max 100)", "companies": "[{ name, website?, industry?, location?, headcount?, linkedin_url?, notes? }] (max 50; no LinkedIn needed)" } }
 { "name": "add_crm_contact", "input": { "full_name": "string (required)", "email": "string?", "phone": "string?", "company": "string?", "position": "string?", "website": "string?", "crm_company_id": "uuid?", "notes": "string?" } }
+{ "name": "enrich_crm_company_ares", "input": { "crm_company_id": "uuid (required)", "ico": "string? (Czech company ID; otherwise matched by name)" } }
 { "name": "add_contacts_to_crm", "input": { "contact_ids": "uuid[] (required)" } }
 { "name": "search_crm_leads",   "input": { "query": "string", "stage": "string", "campaign_id": "uuid", "list_id": "uuid", "crm_company_id": "uuid", "sort_by": "string", "sort_direction": "asc|desc", "limit": "number", "offset": "number" } }
 { "name": "update_crm_lead",    "input": { "contact_id": "uuid", "crm_lead_id": "uuid", "stage": "string", "deal_value": "number", "clear_deal_value": "boolean", "email": "string", "company": "string", "note": "string" } }
