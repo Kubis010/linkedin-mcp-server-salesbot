@@ -218,7 +218,7 @@ The CRM is a persistent pipeline separate from contacts. A lead enters it when a
 ```json
 { "name": "add_companies_to_crm", "input": { "prospect_company_ids": "uuid[] (max 100)", "companies": "[{ name, website?, industry?, location?, headcount?, linkedin_url?, notes? }] (max 50; no LinkedIn needed)" } }
 { "name": "add_crm_contact", "input": { "full_name": "string (required)", "email": "string?", "phone": "string?", "company": "string?", "position": "string?", "website": "string?", "crm_company_id": "uuid?", "notes": "string?" } }
-{ "name": "enrich_crm_company_ares", "input": { "crm_company_id": "uuid (required)", "ico": "string? (Czech company ID; otherwise matched by name)" } }
+{ "name": "enrich_crm_company_ares", "input": { "crm_company_id": "uuid (required)", "ico": "string? (Czech company ID; otherwise matched by name)", "include_people": "boolean? (registry officers: name, role, source only)" } }
 { "name": "add_contacts_to_crm", "input": { "contact_ids": "uuid[] (required)" } }
 { "name": "search_crm_leads",   "input": { "query": "string", "stage": "string", "campaign_id": "uuid", "list_id": "uuid", "crm_company_id": "uuid", "sort_by": "string", "sort_direction": "asc|desc", "limit": "number", "offset": "number" } }
 { "name": "update_crm_lead",    "input": { "contact_id": "uuid", "crm_lead_id": "uuid", "stage": "string", "deal_value": "number", "clear_deal_value": "boolean", "email": "string", "company": "string", "note": "string" } }
