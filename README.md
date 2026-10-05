@@ -16,7 +16,7 @@ It runs as a hosted service at `app.salesbot.cz` and speaks the MCP **Streamable
 | **Endpoint** | `https://app.salesbot.cz/api/mcp` |
 | **Transport** | MCP Streamable HTTP (POST + SSE) |
 | **Auth** | OAuth 2.1 sign-in, or `x-mcp-api-key: sb_mcp_…` header |
-| **Tool count** | 81 |
+| **Tool count** | 82 |
 | **License** | MIT |
 
 ## Connect with sign-in (OAuth): claude.ai, Cowork, Claude Code
@@ -217,6 +217,7 @@ Every e-mail is checked before it is sent: the greeting (right name, and pane/pa
 The CRM is a persistent pipeline separate from contacts. A lead enters it when added to a campaign, or when any of these tools first touch it. It also acts as a durable store for generated outreach copy: save email / LinkedIn drafts and follow-ups with `save_lead_message`, read them back with `list_lead_messages` or `get_lead_context`, and send e-mails with `send_email` (see E-mail above).
 ```json
 { "name": "add_companies_to_crm", "input": { "prospect_company_ids": "uuid[] (max 100)", "companies": "[{ name, website?, industry?, location?, headcount?, linkedin_url?, notes? }] (max 50; no LinkedIn needed)" } }
+{ "name": "add_crm_contact", "input": { "full_name": "string (required)", "email": "string?", "phone": "string?", "company": "string?", "position": "string?", "website": "string?", "crm_company_id": "uuid?", "notes": "string?" } }
 { "name": "add_contacts_to_crm", "input": { "contact_ids": "uuid[] (required)" } }
 { "name": "search_crm_leads",   "input": { "query": "string", "stage": "string", "campaign_id": "uuid", "list_id": "uuid", "crm_company_id": "uuid", "sort_by": "string", "sort_direction": "asc|desc", "limit": "number", "offset": "number" } }
 { "name": "update_crm_lead",    "input": { "contact_id": "uuid", "crm_lead_id": "uuid", "stage": "string", "deal_value": "number", "clear_deal_value": "boolean", "email": "string", "company": "string", "note": "string" } }
