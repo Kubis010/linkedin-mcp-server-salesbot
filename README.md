@@ -96,6 +96,20 @@ Or connect in the app: **Settings → LinkedIn → Connect**.
 
 Each tool returns text content; errors return `{ "ok": false, "code": "<CODE>", "error": "<message>" }`.
 
+**Why 83 tools.** Salesbot covers LinkedIn outreach, e-mail and a CRM, and each tool does exactly one thing. The tools are grouped into the areas below, and a client only needs the area it is working in (Claude can load tools on demand). Every tool description starts with when to use it and names the tool to use instead where two are easy to confuse (for example `search_linkedin_people` vs `search_linkedin_navigator`, or `upsert_linkedin_contact` vs `add_crm_contact`). Read-only tools are kept separate from write and delete tools, so clients can show correct read-only and destructive hints and ask for approval only where it matters. The `salesbot_campaign_operator` prompt contains the same map.
+
+| Area | Tools |
+|---|---|
+| Connection and limits | 4 |
+| Lead discovery (LinkedIn, Google, jobs, web) | 7 |
+| Contacts and lead lists | 11 |
+| Campaigns and messaging | 16 |
+| Direct LinkedIn actions and inbox | 7 |
+| E-mail | 6 |
+| CRM people, tasks and notes | 12 |
+| CRM companies | 11 |
+| CRM setup, export, blacklist | 9 |
+
 ### Connection
 ```json
 { "name": "get_linkedin_status", "input": { "profile_id": "uuid (optional)" } }
