@@ -44,7 +44,7 @@ You can see and remove connected apps in the Salesbot app under Settings → MCP
 
 ## ChatGPT and Codex
 
-For a private ChatGPT connection, add `https://app.salesbot.cz/api/mcp` in developer mode and choose OAuth sign-in. Complete Salesbot consent in the browser. The discovery endpoints are available, but end-to-end ChatGPT sign-in has not yet been verified by this repository's readiness check.
+For a private ChatGPT connection, open Plugins on chatgpt.com (`chatgpt.com/plugins`) → **+** → *Add custom MCP server*, enter the name *Salesbot*, the server URL `https://app.salesbot.cz/api/mcp` and choose OAuth. Confirm the warning, choose *Create as a plugin*, complete Salesbot consent in the browser, install the plugin and call it in a chat with `@Salesbot`. Availability depends on your ChatGPT plan and workspace settings. The discovery endpoints are available, but end-to-end ChatGPT sign-in has not yet been verified by this repository's readiness check.
 
 The portable OpenAI package is defined by `plugin.json` and `mcp.json`; it reuses the existing workflows and logo without changing the Claude package. It is a **submission candidate, not an approved public listing**. See the [OpenAI readiness and submission checklist](docs/openai-submission.md) for tests, review-account requirements and the third-party integration policy gate.
 
