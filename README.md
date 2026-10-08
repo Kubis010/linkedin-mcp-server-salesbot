@@ -23,7 +23,7 @@ It runs as a hosted service at `app.salesbot.cz` and speaks the MCP **Streamable
 
 The server supports OAuth 2.1, so no key needs to be copied:
 
-- **claude.ai / Cowork:** Settings → Connectors → *Add custom connector* → `https://app.salesbot.cz/api/mcp` → *Connect*. Sign in to Salesbot and allow access on the consent page.
+- **claude.ai / Cowork:** *Customize → Connectors → + Add → Add custom connector* → name `Salesbot`, URL `https://app.salesbot.cz/api/mcp` → *Continue* → authentication *Sign in now* (keep the recommended OAuth client; if sign-in fails choose *Register automatically*) → *Add*. Sign in to Salesbot and allow access on the consent page, then switch Salesbot on under *+ → Connectors* in a chat. On Team/Enterprise an owner adds it first (*Organization settings → Connectors → Add → Custom → Web*) and members click *Connect*.
 - **Claude Code plugin** (adds three skills on top of the connection: `salesbot-outreach`, `salesbot-campaign` and `salesbot-email`):
 
 ```bash
