@@ -1,14 +1,15 @@
 ---
 name: salesbot-email
-description: Send personal outreach e-mails through Salesbot — Smartlead, Instantly or the user's own mailbox — including how to react when Salesbot's check refuses an e-mail. Use when the user asks to e-mail a lead or contact from Salesbot.
+description: Send personal e-mails through Salesbot from the user's own mailbox (Outlook or IMAP/SMTP), respecting consent rules, and react when Salesbot's check refuses an e-mail. Use when the user asks to e-mail a lead or contact from Salesbot.
 ---
 
 # E-mail outreach with Salesbot
 
-## Pick the channel
-`list_email_integrations` shows what is connected:
-- **Smartlead / Instantly** — `list_email_campaigns`, then use the campaign id as `provider_campaign_id`. The provider campaign's sequence must use `{{email_subject}}` and `{{email_body}}` so your text is what gets sent. The provider then sends on its own schedule and the e-mail cannot be withdrawn from Salesbot.
-- **Own mailbox** (Outlook / IMAP) — `provider: "mailbox"`, `provider_campaign_id` = its `mailbox_id`. Salesbot sends it within the sending hours, a few minutes apart, capped per day. It can be withdrawn with `cancel_email` until it is sent.
+## Consent first
+In the Czech Republic a commercial e-mail needs the recipient's prior consent unless they are an existing customer (§ 7 of Act 480/2004 Coll.). Before e-mailing someone new, ask the user whether the person agreed to it, replied, asked for it or is a customer. For first contact with new people use LinkedIn instead. Never e-mail people on the do-not-contact list (Salesbot refuses with `BLACKLISTED`).
+
+## Pick the mailbox
+`list_email_integrations` shows the user's own mailboxes (Outlook or IMAP/SMTP). Use `provider: "mailbox"` and `provider_campaign_id` = its `mailbox_id`. Salesbot sends within the sending hours, a few minutes apart, capped per day, and the e-mail can be withdrawn with `cancel_email` until it is sent. Smartlead and Instantly are no longer supported.
 
 ## Write and send
 `send_email` with `contact_id` or `crm_lead_id`, `subject` and `body` (plain text). Placeholders such as `{{first_name}}`, `{{company}}` and `{{oslovení}}` are filled per person. If the person has no address, pass `email`; it is saved to the contact.
