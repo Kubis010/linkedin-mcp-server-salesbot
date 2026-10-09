@@ -16,7 +16,7 @@ It runs as a hosted service at `app.salesbot.cz` and speaks the MCP **Streamable
 | **Endpoint** | `https://app.salesbot.cz/api/mcp` |
 | **Transport** | MCP Streamable HTTP (POST + SSE) |
 | **Auth** | OAuth 2.1 sign-in, or `x-mcp-api-key: sb_mcp_…` header |
-| **Tool count** | 83 |
+| **Tool count** | 82 |
 | **License** | MIT |
 
 ## Connect with sign-in (OAuth): claude.ai, Cowork, Claude Code
@@ -96,7 +96,7 @@ Or connect in the app: **Settings → LinkedIn → Connect**.
 
 Each tool returns text content; errors return `{ "ok": false, "code": "<CODE>", "error": "<message>" }`.
 
-**Why 83 tools.** Salesbot covers LinkedIn outreach, e-mail and a CRM, and each tool does exactly one thing. The tools are grouped into the areas below, and a client only needs the area it is working in (Claude can load tools on demand). Every tool description starts with when to use it and names the tool to use instead where two are easy to confuse (for example `search_linkedin_people` vs `search_linkedin_navigator`, or `upsert_linkedin_contact` vs `add_crm_contact`). Read-only tools are kept separate from write and delete tools, so clients can show correct read-only and destructive hints and ask for approval only where it matters. The `salesbot_campaign_operator` prompt contains the same map.
+**Why 82 tools.** Salesbot covers LinkedIn outreach, e-mail and a CRM, and each tool does exactly one thing. The tools are grouped into the areas below, and a client only needs the area it is working in (Claude can load tools on demand). Every tool description starts with when to use it and names the tool to use instead where two are easy to confuse (for example `search_linkedin_people` vs `search_linkedin_navigator`, or `upsert_linkedin_contact` vs `add_crm_contact`). Read-only tools are kept separate from write and delete tools, so clients can show correct read-only and destructive hints and ask for approval only where it matters. The `salesbot_campaign_operator` prompt contains the same map.
 
 | Area | Tools |
 |---|---|
@@ -105,7 +105,7 @@ Each tool returns text content; errors return `{ "ok": false, "code": "<CODE>", 
 | Contacts and lead lists | 11 |
 | Campaigns and messaging | 16 |
 | Direct LinkedIn actions and inbox | 7 |
-| E-mail | 6 |
+| E-mail | 5 |
 | CRM people, tasks and notes | 12 |
 | CRM companies | 11 |
 | CRM setup, export, blacklist | 9 |
@@ -168,7 +168,7 @@ Typical contact workflow: `list_lead_lists` → `list_contacts` → `add_contact
 
 `search_linkedin_people` and `search_linkedin_navigator` return raw LinkedIn search results. They do not persist contacts; call `upsert_linkedin_contact` for each profile you want to save or add to a campaign.
 
-`enrich_contacts` scrapes each contact's full LinkedIn profile via the connected account (headline, location, current company & position, full work history, education, skills) and saves it onto the contact. Great right after `search_google_xray`.
+`enrich_contacts` reads each contact's LinkedIn profile via the connected account and saves the headline, location and **current** company & position. Following GDPR data minimisation, Salesbot does not store photos, the "About" text, education, skills, earlier jobs or contact details. Great right after `search_google_xray`.
 
 ### Campaigns
 ```json
@@ -196,16 +196,15 @@ Typical contact workflow: `list_lead_lists` → `list_contacts` → `add_contact
 ```
 `prepare_campaign_messages` queues drafts for up to 10 pending contacts per call; repeat while `remaining_pending` > 0. When the campaign has AI approval on (`auto_approve_messages`), Salesbot checks each draft — the contact's name and gender, company, leftover placeholders, signature and grammar — and approves only what passes; the rest waits in `list_pending_approvals`. `list_mcp_pending_actions` lists one-off messages and invitations waiting for the user's approval (read-only).
 
-### E-mail (Smartlead, Instantly or your own mailbox)
+### E-mail (your own mailbox: Outlook or IMAP/SMTP)
 ```json
 { "name": "list_email_integrations", "input": {} }
-{ "name": "list_email_campaigns",    "input": { "provider": "smartlead|instantly (required)" } }
-{ "name": "send_email",              "input": { "provider": "smartlead|instantly|mailbox (required)", "provider_campaign_id": "string (required)", "body": "string (required)", "subject": "string", "followup_body": "string", "crm_lead_id": "uuid", "contact_id": "uuid", "email": "string" } }
+{ "name": "send_email",              "input": { "provider_campaign_id": "mailbox_id (required)", "body": "string (required)", "subject": "string", "provider": "mailbox", "crm_lead_id": "uuid", "contact_id": "uuid", "email": "string" } }
 { "name": "list_email_outreach",     "input": { "status": "string", "crm_lead_id": "uuid", "contact_id": "uuid", "limit": "number" } }
 { "name": "get_email_status",        "input": { "outreach_id": "uuid (required)" } }
 { "name": "cancel_email",            "input": { "outreach_id": "uuid (required)", "reason": "string" } }
 ```
-`send_email` sends a personal e-mail to one person. With Smartlead / Instantly, pass a campaign id from `list_email_campaigns`; its sequence must use `{{email_subject}}` and `{{email_body}}`, and the provider then sends on its own schedule. With `provider: "mailbox"`, pass the `mailbox_id` from `list_email_integrations`; Salesbot sends it from your own Outlook / IMAP mailbox within your sending hours, a few minutes apart and capped per day.
+`send_email` sends a personal e-mail to one person from your own mailbox: pass the `mailbox_id` from `list_email_integrations`. Salesbot sends it within your sending hours, a few minutes apart and capped per day. Smartlead and Instantly are no longer supported. **Consent:** in the Czech Republic a commercial e-mail needs the recipient's prior consent unless they are an existing customer (§ 7 of Act 480/2004 Coll.) — use LinkedIn for first contact with new people.
 
 Every e-mail is checked before it is sent: the greeting (right name, and pane/paní by the contact's gender), the company, leftover placeholders such as `{{company}}`, Czech grammar, and no signature in the body when the mailbox adds its own. A failed check returns `AI_CHECK_FAILED` with the reason and nothing is sent; fix it and call again. A second failure goes to the user's manual approval. If approval is required, the e-mail waits as `pending_approval`. `cancel_email` withdraws an e-mail that has not gone out yet.
 
@@ -318,6 +317,8 @@ Error result content:
 | `VALIDATION_ERROR` / `NOT_FOUND` / `UPSTREAM_ERROR` | bad input / not found / upstream failure |
 
 ## Safety & responsible use
+
+- **GDPR by default:** only the fields needed for B2B outreach are stored (name, headline, current role, location, profile link, source and date); people with no activity for 12 months are deleted automatically; anyone who objects goes on a person-level do-not-contact list and is never saved or contacted again. The user is the controller, Salesbot the processor (data processing agreement in the [terms](https://salesbot.cz/en/terms)).
 
 **Built-in LinkedIn algorithmic protection and daily safety thresholds.** This is a relationship tool, not a mass-mailer — it's designed to send a few highly personalized, human-approved messages, and the server actively prevents bulk abuse:
 
